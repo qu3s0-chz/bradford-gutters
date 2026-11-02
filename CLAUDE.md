@@ -10,6 +10,7 @@ Update this file whenever a decision, the schema, or the status changes.
 
 - **Phase 0, Foundation:** code built locally. Supabase and Vercel are not connected yet.
 - **Next:** connect Supabase and Vercel, then Phase 1.
+- **Side project, material calculator:** price list parsing is done and waiting for owner review. It lives in `calculator/`; see `calculator/CALCULATOR_BRAIN.md`. It will become the Phase 2 pricing engine.
 
 ## Stack
 
@@ -25,6 +26,8 @@ On Windows PowerShell, use `npm.cmd` and `npx.cmd`.
 - `npm.cmd run dev`
 - `npm.cmd run build`
 - `npm.cmd run lint`
+- `npm.cmd test`
+- `npm.cmd run catalog`: rebuilds `calculator/output/` from the price list transcriptions
 
 ## Auth
 
