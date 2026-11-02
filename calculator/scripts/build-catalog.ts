@@ -14,6 +14,7 @@ import {
   type MappingRow,
   type SupplierPrice,
 } from "../lib/build.ts";
+import type { PricingData } from "../lib/data.ts";
 import { categories } from "../lib/types.ts";
 
 const transcriptions = [spectra, townCountry];
@@ -33,6 +34,18 @@ write(
   JSON.stringify({ suppliers, items: catalog }, null, 2) + "\n",
 );
 write("canonical.json", JSON.stringify(canonicalItems, null, 2) + "\n");
+
+// The app loads this slim file: gutter items and the canonical layer only.
+const pricingData: PricingData = {
+  suppliers: suppliers.map(({ id, name, asOf, priceListDate }) => ({ id, name, asOf, priceListDate })),
+  items: catalog
+    .filter((item) => item.gutterRelevant)
+    .map(({ id, supplier, name, sku, unit, unitPrice, priceStatus, cartonQty, page }) => ({
+      id, supplier, name, sku, unit, unitPrice, priceStatus, cartonQty, page,
+    })),
+  canonical: canonicalItems,
+};
+write("pricing-data.json", JSON.stringify(pricingData) + "\n");
 
 write(
   "catalog.csv",

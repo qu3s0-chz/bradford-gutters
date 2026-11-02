@@ -10,7 +10,8 @@ Update this file whenever a decision, the schema, or the status changes.
 
 - **Phase 0, Foundation:** code built locally. Supabase and Vercel are not connected yet.
 - **Next:** connect Supabase and Vercel, then Phase 1.
-- **Side project, material calculator:** price list parsing is done and waiting for owner review. It lives in `calculator/`; see `calculator/CALCULATOR_BRAIN.md`. It will become the Phase 2 pricing engine.
+- **Side project, material calculator:** the price catalog and the calculator at `/calculator` are both built. Defaults are placeholders awaiting owner confirmation. Logic lives in `calculator/`; see `calculator/CALCULATOR_BRAIN.md`. It will become the Phase 2 pricing engine.
+- **Navigation:** the bottom nav is Home, Calculator, Quotes, Customers, More. Jobs moved under More.
 
 ## Stack
 

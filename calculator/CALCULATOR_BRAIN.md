@@ -4,8 +4,8 @@ Running notes for the Bradford Seamless Gutters material calculator. Update this
 
 ## Status
 
-- **Phase 1, price list parsing:** done and waiting for owner review. Nothing in Phase 2 should start until the review answers come back.
-- **Phase 2, calculator and supplier comparison:** not started.
+- **Phase 1, price list parsing:** done and approved. The review questions are still open; see Open questions.
+- **Phase 2, calculator and supplier comparison:** built at `/calculator` and `/calculator/settings`. It's tested and checked at phone size in preview mode. Not deployed yet, so it isn't usable on a phone until Supabase and Vercel are connected. Every default is a placeholder until confirmed.
 
 ## What it is
 
@@ -90,7 +90,84 @@ The full list with item ids is in `output/needs-review.md`. These change the cal
 7. **Colors:** what colors do you stock? Town & Country's 6" parts are frost only.
 8. **Updated lists:** how will new price lists arrive? Scans need reading by hand or with an extraction step. The plan is to extract a new list into a fresh transcription, then diff it by id against the old one and flag new and missing items for review.
 
-## Phase 2 notes
+## Phase 2: calculator
 
-- **Pricing logic:** pricing reads `output/canonical.json` and `output/catalog.json`, or the same data from Supabase once V2 has a database. Mappings reference catalog ids, so a new price list only replaces the catalog rows.
-- **Placeholder defaults:** hanger spacing, ratios and waste factor will start as placeholders and be listed for the owner and partner to confirm.
+### Code
+
+| Path | Contents |
+|---|---|
+| `lib/calculate.ts` | Job input to material needs, in each canonical item's base unit |
+| `lib/pricing.ts` | Pack rounding, per-supplier totals, Compare all, Cheapest mix, suggested quote |
+| `lib/data.ts` | Applies settings to price data; diffs and merges updated price lists; reads price list CSVs |
+| `lib/settings.ts` | Settings shape, defaults, and the merge that fills new fields into old saved settings |
+| `lib/csv.ts` | CSV parser |
+| `output/pricing-data.json` | The slim data the app loads: suppliers, 140 gutter items, canonical layer |
+| `app/(app)/calculator/` | Calculator and settings screens |
+
+All math is in pure functions covered by `tests/calculator.test.ts`. Expected values in the tests are worked out by hand in comments.
+
+### How materials are derived
+
+- **Coil:** gutter ft × (1 + waste) × lb/ft, rounded up to whole pounds. Lb/ft is width in × 12 × gauge in × aluminum weight; 15" .027 comes to 0.474 lb/ft.
+- **Hangers:** per run, length in ÷ spacing, rounded up.
+- **End caps and miters:** as entered. Miter part = size + miter style + inside or outside.
+- **Downspouts:** each downspout uses whole pieces, so height ÷ piece length is rounded up. Pieces aren't shared between downspouts, and waste isn't added since the rounding covers it. If the configured length isn't listed for that size, another length is used and a warning shows.
+- **Elbows:** downspouts × elbows per downspout, in the configured style.
+- **Outlets:** 1 per downspout.
+- **Straps:** per downspout, the larger of the minimum or height ÷ strap spacing, rounded up.
+- **Zip screws:** elbows × per elbow, plus straps × per strap, plus splices × per splice.
+- **Rivets:** outlets × per outlet, plus miters × per miter, plus end caps × per end cap.
+- **Hanger screws:** hangers × per hanger. This is 0 by default, because the default hangers include a screw.
+- **Sealant:** (end caps + miters + outlets) ÷ joints per tube, rounded up.
+- **Guards:** gutter ft × (1 + waste), rounded up. Only guards priced per foot can be chosen.
+- **Tear-off:** a labor line, not a material: gutter ft × rate plus a haul-away fee.
+
+### Pricing
+
+- **Choosing a pack:** each need is priced from each supplier's mapped items. For every item, the purchase quantity is need ÷ units per purchase, rounded up. If "full cartons only" is on, it's rounded up to whole cartons. The cheapest total wins, so 40 screws buy a $7.45 bag rather than a $21.17 box.
+- **Line statuses:** a line is `priced`, `not-carried` or `no-price` (call for price). A missing price is never counted as $0, and totals list what's missing.
+- **Supplier totals:** subtotal, plus tax at that supplier's rate, plus a delivery fee if anything is bought, then checked against the minimum order.
+- **Compare all:** every enabled supplier side by side, with the cheapest line and cheapest complete total highlighted.
+- **Cheapest mix:** tries every combination of suppliers and buys each item from the cheapest supplier in the combination. Delivery and tax are included per supplier, and an `extraStopCost` is added to the comparison only, for each stop after the first. The best combination wins. It reports how many suppliers it uses and the saving against the best single supplier that carries everything.
+- **Suggested quote:** materials + markup % + labor, per gutter foot or flat, + tear-off. The margin shown is over materials only, because labor cost isn't modeled yet. Materials come from the chosen supplier; Cheapest mix uses the mix total, and Compare all uses the best single supplier.
+
+### Settings and storage
+
+- **Editable:** every number, part choice, supplier setting, price and mapping is editable in the UI.
+- **Storage:** settings and the job draft are saved in the browser's localStorage, under `bsg-calculator-settings-v1` and `bsg-calculator-job-v1`. They stay on one device until Supabase is connected; export and import backups cover the gap.
+- **Price edits:** these are overrides keyed by catalog id, so the built-in data never changes. Mapping edits replace the mappings for one canonical item and can be reset.
+- **Price list updates:** the screen downloads the current list as CSV, then uploads an edited or newly typed list. It shows price changes, new items, and items missing from the new list before applying anything. Missing items are kept but marked discontinued, so mappings don't break, and any mapped item that went missing is flagged. Scanned PDFs still have to be typed into the CSV or a transcription first, since nothing reads scans automatically yet.
+
+### Placeholder defaults to confirm
+
+| Setting | Default |
+|---|---|
+| Waste factor | 10% |
+| Markup | 30% |
+| Labor | $4.00 per gutter ft |
+| Tear-off | $1.00 per ft + $75 haul-away |
+| Hanger spacing | 24 in |
+| Coil, 5" gutter | .027 x 11-7/8" |
+| Coil, 6" gutter | .027 x 15" |
+| Coil, 7" gutter | .032 x 17-7/8" |
+| Hangers | 5" speed screw, 6" speed screw, 7" speed screw |
+| Miters | Strip |
+| Elbows | A style |
+| Downspout pieces | 10 ft |
+| Sealant | NPC Solar Seal #900 |
+| Zip screws | 4 per elbow, 2 per strap, 4 per downspout splice |
+| Rivets | 4 per outlet, 6 per miter, 3 per end cap |
+| Hanger screws | 0 per hanger |
+| Sealant coverage | 6 joints per tube |
+| Straps | 1 per 6 ft of downspout, at least 2 |
+| Sales tax | 7% for both suppliers |
+| Delivery fee and minimum order | $0 |
+| Full cartons only | Off |
+| Extra pickup stop | $15 |
+
+### Not done yet
+
+- **Reading scanned PDFs:** this needs OCR or an extraction step, such as the Claude API with a key.
+- **Shared settings:** settings should be stored in Supabase so they're shared across phones.
+- **Job colors:** the color field is informational. Town & Country's 6" parts are frost only, and nothing checks color against supplier stock.
+- **V2 quotes:** connecting the calculator to quotes. The intended path is `calculateNeeds` plus `compareSuppliers` on the quote screen, with quote lines snapshotting the prices.

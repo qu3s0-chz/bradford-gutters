@@ -21,7 +21,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden print:hidden"
     >
       <ul className="grid grid-cols-5">
         {primaryNav.map(({ href, label, icon: Icon }) => {
@@ -53,7 +53,7 @@ export function Sidebar() {
   return (
     <nav
       aria-label="Main"
-      className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-line bg-surface p-4 md:flex"
+      className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-line bg-surface p-4 md:flex print:hidden"
     >
       <p className="px-3 pt-2 font-semibold">Bradford Seamless Gutters</p>
       <ul className="flex flex-col gap-1">

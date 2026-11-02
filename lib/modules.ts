@@ -1,5 +1,6 @@
 import {
   Briefcase,
+  Calculator,
   CalendarDays,
   FileText,
   Home,
@@ -13,6 +14,13 @@ import {
 } from "lucide-react";
 
 export const modules = [
+  {
+    slug: "calculator",
+    label: "Calculator",
+    description: "Materials, costs and supplier comparison",
+    phase: 2,
+    icon: Calculator,
+  },
   {
     slug: "customers",
     label: "Customers",
@@ -80,9 +88,9 @@ export const modules = [
 
 export const primaryNav = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/calculator", label: "Calculator", icon: Calculator },
   { href: "/quotes", label: "Quotes", icon: FileText },
-  { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/customers", label: "Customers", icon: Users },
   { href: "/more", label: "More", icon: Menu },
 ];
 
